@@ -24,9 +24,15 @@ class LocalMusicPlayerScreen extends StatefulWidget {
   _LocalMusicPlayerScreenState createState() => _LocalMusicPlayerScreenState();
 }
 
-class _LocalMusicPlayerScreenState extends State<LocalMusicPlayerScreen> {
+class _LocalMusicPlayerScreenState extends State<LocalMusicPlayerScreen> with WidgetsBindingObserver {
   final AudioPlayer _player = AudioPlayer();
   bool isPlaying = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   void _togglePlayPause() async {
     if (isPlaying) {
@@ -41,8 +47,24 @@ class _LocalMusicPlayerScreenState extends State<LocalMusicPlayerScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _player.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      _player.pause();
+      setState(() {
+        isPlaying = false;
+      });
+    } else if (state == AppLifecycleState.resumed) {
+      _player.resume();
+      setState(() {
+        isPlaying = true;
+      });
+    }
   }
 
   @override
@@ -54,7 +76,10 @@ class _LocalMusicPlayerScreenState extends State<LocalMusicPlayerScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             IconButton(
-              icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 80),
+              icon: Icon(
+                isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                size: 80,
+              ),
               onPressed: _togglePlayPause,
             ),
             SizedBox(height: 20),
